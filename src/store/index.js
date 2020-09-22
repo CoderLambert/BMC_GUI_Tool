@@ -1,11 +1,18 @@
-import Vue from "vue";
-import Vuex from "vuex";
+// 引入vue
+import Vue from 'vue'
+// 全局引入vueX
+import Vuex from 'vuex'
+import BIOS from './modules/BIOS'
 
-Vue.use(Vuex);
+import createLogger from 'vuex/dist/logger'
 
-export default new Vuex.Store({
-  state: {},
-  mutations: {},
-  actions: {},
-  modules: {}
-});
+Vue.use(Vuex)
+const debug = process.env.NODE_ENV !== 'production'
+
+const store = new Vuex.Store({
+  modules: {
+    BIOS,
+  },
+  plugins: debug ? [createLogger()] : []
+})
+export default store
