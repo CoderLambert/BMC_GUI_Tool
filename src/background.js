@@ -16,7 +16,9 @@ protocol.registerSchemesAsPrivileged([
 // 忽略证书验证错误  net::ERR_CERT_AUTHORITY_INVALID
 app.commandLine.appendSwitch('--ignore-certificate-errors', 'true')
 //解决10.X版本跨域不成功问题(上线删除)
-// app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
+// Access to XMLHttpRequest at 'https://10.8.20.121/api/session' from origin 'app://.'
+// has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 
 function createWindow() {
   // Create the browser window.
