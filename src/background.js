@@ -13,6 +13,10 @@ let win;
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { secure: true, standard: true } }
 ]);
+// 忽略证书验证错误  net::ERR_CERT_AUTHORITY_INVALID
+app.commandLine.appendSwitch('--ignore-certificate-errors', 'true')
+//解决10.X版本跨域不成功问题(上线删除)
+// app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 
 function createWindow() {
   // Create the browser window.
