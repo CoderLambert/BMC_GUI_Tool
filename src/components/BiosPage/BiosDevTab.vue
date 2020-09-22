@@ -5,16 +5,16 @@
         <el-button type="primary" @click="openConfFile">选取配置文件</el-button>
         <el-button type="primary" @click="openImgFile">选取镜像文件</el-button>
       </div>
-      <el-row v-show="biosConfListText!='null'">
+      <el-row v-show="biosConfListText != 'null'">
         <el-col :span="12" class="page-bios-conf-box split">
           <h3>BIOS配置文件</h3>
-          <p>文件路径: {{biosConfFilePath}}</p>
+          <p>文件路径: {{ biosConfFilePath }}</p>
           <!-- <p></p> -->
           <pre class="page-bios-conf">{{ biosConfListText }}</pre>
         </el-col>
         <el-col :span="12" class="page-bios-conf-box">
           <h3>镜像信息</h3>
-          <p>镜像路径: {{biosImageFilePath}}</p>
+          <p>镜像路径: {{ biosImageFilePath }}</p>
         </el-col>
       </el-row>
     </div>
@@ -22,11 +22,10 @@
 </template>
 
 <script>
-import { mapState, mapMutations, mapActions, mapGetters } from "vuex";
+import { mapState, mapMutations, mapGetters } from "vuex";
 
 const { dialog } = require("electron").remote;
 const fs = require("fs");
-const osenv = require("osenv");
 // const Store = require("electron-store");
 // const store = new Store();
 
@@ -36,16 +35,15 @@ export default {
     return {};
   },
   mounted() {
-    let preBiosConfFile = localStorage.getItem('BiosConfList');
-    let preBiosImgFilePath = localStorage.getItem('BiosImgFilePath');
-    fs.exists(preBiosConfFile, (exists)=>{
-      exists?this.readBiosConfFile(preBiosConfFile):false
-    })
+    let preBiosConfFile = localStorage.getItem("BiosConfList");
+    let preBiosImgFilePath = localStorage.getItem("BiosImgFilePath");
+    fs.exists(preBiosConfFile, exists => {
+      exists ? this.readBiosConfFile(preBiosConfFile) : false;
+    });
 
-    fs.exists(preBiosImgFilePath, (exists)=>{
-      exists? this.setImgFilePath(preBiosImgFilePath):false
-    })
-
+    fs.exists(preBiosImgFilePath, exists => {
+      exists ? this.setImgFilePath(preBiosImgFilePath) : false;
+    });
   },
 
   computed: {
@@ -72,8 +70,7 @@ export default {
           if (!result.canceled) {
             this.readBiosConfFile(result.filePaths[0]);
             // store.set("BiosConfList", result.filePaths[0]);
-            localStorage.setItem('BiosConfList',result.filePaths[0]);
-
+            localStorage.setItem("BiosConfList", result.filePaths[0]);
           }
         })
         .catch(err => {
@@ -88,7 +85,7 @@ export default {
         let jsonData = JSON.parse(rawdata);
         this.$store.commit(
           "BIOS/setBiosConfList",
-          _.isArray(jsonData) ? jsonData : [jsonData]
+          this._.isArray(jsonData) ? jsonData : [jsonData]
         );
         this.$store.commit("BIOS/setBiosConfFilePath", filePath);
       } catch (error) {
@@ -111,7 +108,7 @@ export default {
           if (!result.canceled) {
             let filePath = result.filePaths[0];
             this.setImgFilePath(filePath);
-            localStorage.setItem('BiosImgFilePath',filePath);
+            localStorage.setItem("BiosImgFilePath", filePath);
             // store.set("BiosImgFilePath", filePath);
             // console.log("app.getPath('BiosImgFilePath')");
             // console.log(this.$electron.remote.app.getAppPath("BiosImgFilePath"));

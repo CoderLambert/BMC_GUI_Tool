@@ -44,7 +44,6 @@ export default {
     openSite(url) {
       shell.openExternal(url);
       window.open(url);
-
     }
   }
 };

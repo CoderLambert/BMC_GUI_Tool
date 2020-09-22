@@ -16,13 +16,11 @@ Vue.config.productionTip = false;
 
 // axios.defaults.adapter = require('axios/lib/adapters/http');
 
-
 if (!process.env.IS_WEB) Vue.use(require("vue-electron"));
 Vue.http = Vue.prototype.$http = axios;
 // 为了以后获取上传或者下载进度
 // [electron下使用axios网络请求错误的问题](http://www.okadwin.com/?post=16)
 // axios.defaults.adapter = require('axios/lib/adapters/xhr');
-
 
 Vue.use(ElementUI);
 

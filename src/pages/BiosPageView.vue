@@ -17,7 +17,6 @@ import BiosDevTab from "../components/BiosPage/BiosDevTab";
 //   import BiosConfig from '../components/BiosPage/BiosConfig'
 import BiosUpdateTable from "../components/BiosPage/BiosUpdate";
 
-
 export default {
   name: "biospage",
   // components: { BiosConfig },
@@ -36,30 +35,29 @@ export default {
 </script>
 
 <style lang="less">
-  .el-tabs {
-    min-height: calc(100vh - 89px);
-    margin-top: 20px
+.el-tabs {
+  min-height: calc(100vh - 89px);
+  margin-top: 20px;
+}
+.el-tabs__header {
+  background: #e0f4d3;
+}
+.el-tabs__item {
+  padding: 0 20px;
+  height: 40px;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  line-height: 40px;
+  display: inline-block;
+  list-style: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: #4c4c4d;
+  position: relative;
+  // background: white;
+  &.is-active {
+    color: white;
+    background: #ffcf56;
   }
-  .el-tabs__header {
-    background: #e0f4d3;
-  }
-  .el-tabs__item {
-    padding: 0 20px;
-    height: 40px;
-    -webkit-box-sizing: border-box;
-    box-sizing: border-box;
-    line-height: 40px;
-    display: inline-block;
-    list-style: none;
-    font-size: 15px;
-    font-weight: 500;
-    color: #4c4c4d;
-    position: relative;
-    // background: white;
-    &.is-active {
-      color: white;
-      background: #ffcf56;
-    }
-  }
-
+}
 </style>

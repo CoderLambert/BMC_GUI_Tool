@@ -1,10 +1,10 @@
 "use strict";
-
+import slash from "slash";
 import { app, protocol, BrowserWindow } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
-import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
+// import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
 const isDevelopment = process.env.NODE_ENV !== "production";
-
+import logger from "electron-log";
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
@@ -22,7 +22,8 @@ function createWindow() {
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION
+      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+      webSecurity: false
     }
   });
 
@@ -71,6 +72,25 @@ app.on("ready", async () => {
   //   }
   // }
   createWindow();
+});
+
+app.whenReady().then(() => {
+  // 拦截 scheme 协议并且使用 handler 作为协议的新的句柄来发送响应文件.
+  console.log(protocol);
+  protocol.interceptFileProtocol(
+    "file",
+    (req, callback) => {
+      const url = req.url.substr(8);
+      callback(slash(decodeURI(url)));
+      logger.info("register local file protocol");
+    },
+    error => {
+      if (error) {
+        //   console.error('Failed to register protocol');
+        logger.error("Failed to register protocol");
+      }
+    }
+  );
 });
 
 // Exit cleanly on request from parent process in development mode.
