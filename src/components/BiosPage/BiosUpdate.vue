@@ -105,7 +105,7 @@ export default {
     },
 
     // 开始更新一台机器
-    // 1. 获取 coockie 信息
+    // 1. 获取 Cookie 信息
     startBiosUpdateWithSingle(biosConf) {
       // 构造表单登录信息
 
@@ -135,8 +135,8 @@ export default {
       request.write(userInfo);
 
       let resResult = {
-        CSRFToken: null,
-        Coockie: null,
+        'X-CSRFTOKEN': null,
+        Cookie: null,
         statusCode: null,
         errMessage: null
       };
@@ -152,16 +152,15 @@ export default {
           // console.log(setCoockie)
           let matchResult = setCoockie.match(sessionReg);
           if (matchResult.length > 0) {
-            resResult.Coockie = matchResult[0] + "refresh_disable=1";
+            resResult.Cookie = matchResult[0] + "refresh_disable=1";
           }
         } else {
           // 登陆错误也会返回 状态吗 200，需要区分
           // 这儿是 BMC 后端返回状态码使用错误问题， 这儿修正
           resResult.errMessage = "密码用户名不正确";
           resResult.statusCode = 401;
-          
         }
-        // console.log(`Coockie ==> ${Coockie}`);
+        // console.log(`Cookie ==> ${Cookie}`);
 
         // return response;
         response.on("data", chunk => {
@@ -170,58 +169,75 @@ export default {
           let jsonData = JSON.parse(chunkToString);
           console.log(`data: ${chunkToString}`);
           if (this._.has(jsonData, "CSRFToken")) {
-            resResult.CSRFToken = jsonData["CSRFToken"];
-            this.MachineList[biosConf.id].imageUpdateStates = "prepareFlashArea"
+            resResult['X-CSRFTOKEN'] = jsonData["CSRFToken"];
+            this.MachineList[biosConf.id].imageUpdateStates =
+              "prepareFlashArea";
           }
 
-             switch (resResult.statusCode) {
-                case 200:
-                  {
-                    const csrfToken = resResult.CSRFToken;
-                    console.log('csrfToken => ' + csrfToken )
-                    // TODO 开始进行刷写 BIOS
-                    console.log(' 开始进行刷写 BIOS');
+          switch (resResult.statusCode) {
+            case 200:
+              {
+                const csrfToken = resResult.CSRFToken;
 
-                    this.$notify({
-                      title: `${biosConf.bmc_ip} 进度通知`,
-                      message: this.$createElement('i', { style: 'color: teal'}, `开始进行刷写`)
-                    });
-                    this.MachineList[biosConf.id].imageUpdateStates = "prepareFlashArea";
+                // TODO 开始进行刷写 BIOS
+                console.log(" 开始进行刷写 BIOS");
 
-                  }
-                  break;
-                case 401: {              
-                    this.$notify({
-                      title: `${biosConf.bmc_ip} 错误通知`,
-                      message: this.$createElement('i', { style: 'color: red'}, `无法获取机器Token,请确认机器信息`)
-                    });
-                    this.MachineList[biosConf.id].imageUpdateStates = "loginFailed";
-                break;
-               }
-                default:{
-                  this.$notify({
-                        title: `${biosConf.bmc_ip} 错误通知`,
-                        message: this.$createElement('i', { style: 'color: red'}, `未知错误`)
-                      }); 
-                    break;  
-                };
+                this.$notify({
+                  title: `${biosConf.bmc_ip} 进度通知`,
+                  message: this.$createElement(
+                    "i",
+                    { style: "color: teal" },
+                    `开始进行刷写`
+                  )
+                });
+                this.MachineList[biosConf.id].imageUpdateStates =
+                  "prepareFlashArea";
+                this.getDashBoardEvent(biosConf, {
+                  'X-CSRFTOKEN': resResult['X-CSRFTOKEN'] ,
+                  Cookie: resResult.Cookie,
+                  test: "test"
+                });
               }
-
-
+              break;
+            case 401: {
+              this.$notify({
+                title: `${biosConf.bmc_ip} 错误通知`,
+                message: this.$createElement(
+                  "i",
+                  { style: "color: red" },
+                  `无法获取机器Token,请确认机器信息`
+                )
+              });
+              this.MachineList[biosConf.id].imageUpdateStates = "loginFailed";
+              break;
+            }
+            default: {
+              this.$notify({
+                title: `${biosConf.bmc_ip} 错误通知`,
+                message: this.$createElement(
+                  "i",
+                  { style: "color: red" },
+                  `未知错误`
+                )
+              });
+              break;
+            }
+          }
         });
-
 
         response.on("error", error => {
           console.log(`响应 ERROR: ${JSON.stringify(error)}`);
           this.$notify({
-                title: `${biosConf.bmc_ip} 错误通知`,
-                message: this.$createElement('i', { style: 'color: red'}, `响应 ERROR￥`)
-              }); 
+            title: `${biosConf.bmc_ip} 错误通知`,
+            message: this.$createElement(
+              "i",
+              { style: "color: red" },
+              `响应 ERROR￥`
+            )
+          });
 
           return error;
         });
-
-
       });
 
       request.on("error", e => {
@@ -234,23 +250,27 @@ export default {
           this.MachineList[biosConf.id].imageUpdateStates = "connectTimeOut";
           this.$notify({
             title: `${biosConf.bmc_ip} 超时通知`,
-            message: this.$createElement('i', { style: 'color: teal'}, `机器长时间无响应，请检查机器状态和配置信息`)
+            message: this.$createElement(
+              "i",
+              { style: "color: teal" },
+              `机器长时间无响应，请检查机器状态和配置信息`
+            )
           });
-
         } else {
           resResult.statusCode = 500;
-          
+
           this.MachineList[biosConf.id].imageUpdateStates = "abort";
 
           this.$notify({
             title: `${biosConf.bmc_ip} 请求错误通知`,
-            message: this.$createElement('i', { style: 'color: red'}, `获取机器Token发生错误`)
+            message: this.$createElement(
+              "i",
+              { style: "color: red" },
+              `获取机器Token发生错误`
+            )
           });
-
         }
       });
-
-
 
       request.end();
     },
@@ -258,15 +278,26 @@ export default {
     // 注销退出接口
     logoutFromBMC() {},
 
-
     // GET 测试接口
-    // getDashBoardEvent(axios) {
-    //   getHost()
-    //   axios.get()
-    // },
+    getDashBoardEvent(biosConf, header) {
+      const apiName = "api/logs/dashboardevent";
+      console.log("getDashBoardEvent ==> ");
+      console.log(header);
+
+      this.$http({
+        method: "GET",
+        url: this.getHost(biosConf, apiName),
+        headers: {
+          'X-CSRFTOKEN': header['X-CSRFTOKEN'],
+          Cookie: header.Cookie
+        }
+      }).then(function(res) {
+        console.log(res);
+      });
+    },
 
     getHost(conf, apiName) {
-      return `${conf.login_way_type}://${conf.bmc_ip}${apiName}`;
+      return `${conf.login_way_type}://${conf.bmc_ip}/${apiName}`;
     }
   }
 };

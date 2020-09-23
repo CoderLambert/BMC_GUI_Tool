@@ -26,6 +26,8 @@ import { mapState, mapMutations, mapGetters } from "vuex";
 
 const { dialog } = require("electron").remote;
 const fs = require("fs");
+const { ipcRenderer } = require('electron')
+
 // const Store = require("electron-store");
 // const store = new Store();
 
@@ -71,6 +73,8 @@ export default {
             this.readBiosConfFile(result.filePaths[0]);
             // store.set("BiosConfList", result.filePaths[0]);
             localStorage.setItem("BiosConfList", result.filePaths[0]);
+            ipcRenderer.send('window-reload')
+
           }
         })
         .catch(err => {
