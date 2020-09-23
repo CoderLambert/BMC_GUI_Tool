@@ -138,7 +138,8 @@ export default {
         'X-CSRFTOKEN': null,
         Cookie: null,
         statusCode: null,
-        errMessage: null
+        errMessage: null,
+        sessionID:null
       };
 
       request.on("response", response => {
@@ -164,39 +165,35 @@ export default {
 
         // return response;
         response.on("data", chunk => {
-          console.log(chunk);
+          // console.log(chunk);
           let chunkToString = chunk.toString();
           let jsonData = JSON.parse(chunkToString);
-          console.log(`data: ${chunkToString}`);
+          // console.log(`data: ${chunkToString}`);
           if (this._.has(jsonData, "CSRFToken")) {
             resResult['X-CSRFTOKEN'] = jsonData["CSRFToken"];
-            this.MachineList[biosConf.id].imageUpdateStates =
-              "prepareFlashArea";
+            this.MachineList[biosConf.id].imageUpdateStates = "prepareFlashArea";
+            this.MachineList[biosConf.id].sessionID = jsonData['racsession_id'];
           }
 
           switch (resResult.statusCode) {
             case 200:
               {
-                const csrfToken = resResult.CSRFToken;
+                this.MachineList[biosConf.id].imageUpdateStates = "prepareFlashArea";
+                let _parent = this;
 
-                // TODO 开始进行刷写 BIOS
-                console.log(" 开始进行刷写 BIOS");
-
-                this.$notify({
-                  title: `${biosConf.bmc_ip} 进度通知`,
-                  message: this.$createElement(
-                    "i",
-                    { style: "color: teal" },
-                    `开始进行刷写`
-                  )
-                });
-                this.MachineList[biosConf.id].imageUpdateStates =
-                  "prepareFlashArea";
-                this.getDashBoardEvent(biosConf, {
+                let apiHeader =  {
                   'X-CSRFTOKEN': resResult['X-CSRFTOKEN'] ,
-                  Cookie: resResult.Cookie,
-                  test: "test"
-                });
+                };
+                // this.getHost(biosConf)
+              const axiosInstance = this.$http.create({
+                baseURL: `${biosConf.login_way_type}://${biosConf.bmc_ip}/`,
+                headers: {
+                  'X-CSRFTOKEN': resResult['X-CSRFTOKEN']
+                }
+              });
+                
+                this.startUpdateBiosTask(axiosInstance,biosConf);
+              
               }
               break;
             case 401: {
@@ -274,31 +271,95 @@ export default {
 
       request.end();
     },
-
-    // 注销退出接口
-    logoutFromBMC() {},
-
     // GET 测试接口
-    getDashBoardEvent(biosConf, header) {
+    getDashBoardEvent(axiosInstance) {
       const apiName = "api/logs/dashboardevent";
       console.log("getDashBoardEvent ==> ");
-      console.log(header);
 
-      this.$http({
+      return  axiosInstance({
         method: "GET",
-        url: this.getHost(biosConf, apiName),
-        headers: {
-          'X-CSRFTOKEN': header['X-CSRFTOKEN'],
-          Cookie: header.Cookie
-        }
-      }).then(function(res) {
-        console.log(res);
-      });
+        url: apiName ,
+      })
     },
 
-    getHost(conf, apiName) {
+  startUpdateBiosTask(axiosInstance,biosConf){
+
+      // 1. 准备 BIOS 环境 
+      // PUT
+      const _parent = this;
+      this.preBiosFlash(axiosInstance)
+      
+      // 2. 上传 BIOS  超时限定 180s
+        .then(function(res){
+            return _parent.uploadBiosRom(axiosInstance)
+        }).catch(err => {
+          console.log("[debug] 机器准备出错");
+          console.log(err);
+          biosConf.imageUpdateStates = 'logoutFailed'
+        })
+      
+
+      // 3. 验证 BIOS 超时限定 120s
+        .then( function(res){
+          biosConf.imageUpdateStates = 'verifyBIOSRom';
+          return _parent.verifyBIOSRom(axiosInstance)
+        }).catch(err => {
+          console.log(`[debug] ${ImageUpdateStates['verifyBIOSRomFailed']}`);
+          console.log(err);
+          biosConf.imageUpdateStates = 'verifyBIOSRomFailed'
+        })
+
+      // 4. 开始刷新 BIOS
+        .then(function(res){
+          biosConf.imageUpdateStates = 'flashBIOSRom';
+          return _parent.flashBIOSRom(axiosInstance);
+        }).catch(err => {
+          console.log(`[debug] ${ImageUpdateStates['flashBIOSRomFailed']}`);
+          console.log(err);
+          biosConf.imageUpdateStates = 'flashBIOSRomFailed'
+        })
+      
+      //5. 获取刷新进度
+      .then(function(res){
+          biosConf.imageUpdateStates = 'getFlashProgress';
+          return _parent.getFlashBIOSRomProgress(axiosInstance);
+        }).catch(err => {
+          console.log(`[debug] ${ImageUpdateStates['getFlashProgress']}`);
+          console.log(err);
+          biosConf.imageUpdateStates = 'getFlashProgressFailed'
+        })
+
+      // 6. 结束更新,退出
+      .then(function(res){
+        return _parent.logout(axiosInstance,biosConf["sessionID"])
+      }).catch(err => {
+          console.log(`[debug] ${ImageUpdateStates['getFlashProgress']}`);
+          console.log(err);
+          biosConf.imageUpdateStates = 'getFlashProgressFailed'
+        })
+
+
+    }, 
+    // 注销退出接口
+    logout(axiosInstance,sessionID) {
+      const apiName = `api/settings/service-sessions/${sessionID}`;
+      console.log(`[DEBUG API] + logout ==> ${apiName}`)
+
+      return axiosInstance.post(apiName);
+    },
+    
+    preBiosFlash(axiosInstance) {
+      const apiName = `api/maintenance/BIOSflash`;
+      return axiosInstance.put(apiName);
+    },
+
+    getFullApiPath(conf, apiName) {
       return `${conf.login_way_type}://${conf.bmc_ip}/${apiName}`;
+    },
+    getHost(conf) {
+      return `${conf.login_way_type}://${conf.bmc_ip}/`;
     }
+// dWyfQeDk
   }
 };
 </script>
