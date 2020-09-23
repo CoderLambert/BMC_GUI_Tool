@@ -43,7 +43,7 @@ export default {
   methods: {
     openSite(url) {
       shell.openExternal(url);
-      window.open(url);
+      // window.open(url);
     }
   }
 };

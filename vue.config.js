@@ -25,6 +25,8 @@ module.exports = {
   chainWebpack: option => {
     option.resolve.alias
       .set("@", resolve("src/"))
+      .set("lib", resolve("lib/"))
+
       .set("common", resolve("src/common"))
       .set("components", resolve("src/components"));
 
