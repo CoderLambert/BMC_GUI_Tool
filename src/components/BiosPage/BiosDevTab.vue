@@ -1,20 +1,14 @@
 <template>
   <div class="bios-dev-page">
     <div class="page-body">
-      <div>
-        <el-button type="primary" @click="openConfFile">选取配置文件</el-button>
-        <el-button type="primary" @click="openImgFile">选取镜像文件</el-button>
+      <div class="bios-conf">
+        <el-button type="success"  @click="openConfFile">选取配置文件...</el-button>
       </div>
       <el-row v-show="biosConfListText != 'null'">
-        <el-col :span="12" class="page-bios-conf-box split">
+        <el-col :span="24" class="page-bios-conf-box split">
           <h3>BIOS配置文件</h3>
           <p>文件路径: {{ biosConfFilePath }}</p>
-          <!-- <p></p> -->
           <pre class="page-bios-conf">{{ biosConfListText }}</pre>
-        </el-col>
-        <el-col :span="12" class="page-bios-conf-box">
-          <h3>镜像信息</h3>
-          <p>镜像路径: {{ biosImageFilePath }}</p>
         </el-col>
       </el-row>
     </div>
@@ -26,10 +20,7 @@ import { mapState, mapMutations, mapGetters } from "vuex";
 
 const { dialog } = require("electron").remote;
 const fs = require("fs");
-const { ipcRenderer } = require('electron')
-
-// const Store = require("electron-store");
-// const store = new Store();
+const { ipcRenderer } = require("electron");
 
 export default {
   name: "BiosDevTable",
@@ -73,8 +64,7 @@ export default {
             this.readBiosConfFile(result.filePaths[0]);
             // store.set("BiosConfList", result.filePaths[0]);
             localStorage.setItem("BiosConfList", result.filePaths[0]);
-            ipcRenderer.send('window-reload')
-
+            // ipcRenderer.send("window-reload");
           }
         })
         .catch(err => {
@@ -113,11 +103,6 @@ export default {
             let filePath = result.filePaths[0];
             this.setImgFilePath(filePath);
             localStorage.setItem("BiosImgFilePath", filePath);
-            // store.set("BiosImgFilePath", filePath);
-            // console.log("app.getPath('BiosImgFilePath')");
-            // console.log(this.$electron.remote.app.getAppPath("BiosImgFilePath"));
-
-            // console.log(app.getPath("BiosImgFilePath"));
           }
         })
         .catch(err => {
@@ -131,6 +116,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
+
+.bios-conf {
+  text-align: center;
+  margin: 0 auto;
+  .el-button {
+    width: 300px;
+    height: 40px;
+    background: #2ea169;
+  }
+}
 .bios-dev-page {
   .page-title {
     color: var(--page-title-color);

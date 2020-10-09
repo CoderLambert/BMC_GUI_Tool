@@ -27,14 +27,14 @@ export default {
   color: white;
   background-color: #2ea169;
   border-radius: 0.3rem;
-    width: 40%;
-    min-width: 400px;
-    margin: 20px auto;
+  width: 40%;
+  min-width: 400px;
+  margin: 20px auto;
   text-align: center;
   font-weight: bold;
-  &:hover{
-      cursor: pointer;  
-      opacity: 0.8;
+  &:hover {
+    cursor: pointer;
+    opacity: 0.8;
   }
 }
 

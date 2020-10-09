@@ -1,15 +1,16 @@
 <template>
   <div class="bios-dev-page">
     <section class="bios-update-box">
-      <!-- <span>
-        <strong>当前镜像路径：</strong>
-        {{ biosImageFilePath }}
-      </span> -->
       <file-select v-model="file"> </file-select>
     </section>
 
     <section class="page-bios-parese-box">
-      <el-table :data="MachineList" stripe style="width: 100%">
+      <el-table
+        :data="MachineList"
+        stripe
+        style="width: 100%"
+        ref="MachineTable"
+      >
         <el-table-column type="selection" width="55"></el-table-column>
 
         <el-table-column
@@ -39,10 +40,10 @@
           sortable
         >
           <template slot-scope="scope">
-            <el-tag v-show="scope.row.login_way_type" type="success"
+            <el-tag v-show="scope.row.login_way_type === 'https'" type="success"
               >HTTPS</el-tag
             >
-            <el-tag v-show="!scope.row.login_way_type">HTTP</el-tag>
+            <el-tag v-show="scope.row.login_way_type === 'http'">HTTP</el-tag>
 
             <!-- <el-switch
               v-model="scope.row.login_way_type"
@@ -61,16 +62,16 @@
           sortable
         >
           <template slot-scope="scope">
-            <el-tag v-show="!scope.row.save_bios_config" type="success"
+            <el-tag v-show="scope.row.save_bios_config === 'yes'" type="success"
               >Yes</el-tag
             >
-            <el-tag v-show="scope.row.save_bios_config" type="info">No</el-tag>
-
-            <!-- <el-switch v-model="scope.row.save_bios_config" active-text="Yes" inactive-text="No"></el-switch> -->
+            <el-tag v-show="scope.row.save_bios_config === 'no'" type="info"
+              >No</el-tag
+            >
           </template>
         </el-table-column>
 
-        <el-table-column fixed="right" label="当前状态" width="280">
+        <el-table-column label="当前状态" width="280">
           <template slot-scope="scope">
             <span v-show="imageUpdateStates[scope.row.imageUpdateStates]">
               {{ imageUpdateStates[scope.row.imageUpdateStates] }}
@@ -82,26 +83,20 @@
             <!-- <el-button type="text" size="small">编辑</el-button> -->
           </template>
         </el-table-column>
-        <el-table-column fixed="right" label="操作" width="310">
+        <el-table-column label="操作">
           <template slot-scope="scope">
-            <!-- <el-button
-              @click="handleClick(scope.row)"
+            <el-button
+              @click="editBiosConf(scope.row)"
               size="small"
               type="success"
               >编辑</el-button
-            > -->
+            >
             <!-- scope.row.imageUpdateStates =='connect'?  true: -->
             <el-button
               @click="startBiosUpdateWithSingle(scope.row)"
               size="small"
               type="success"
-              :disabled="
-                scope.row.imageUpdateStates == 'connect' ||
-                scope.row.imageUpdateStates == 'logout' ||
-                scope.row.imageUpdateStates == 'flashFinish'
-                  ? false
-                  : true
-              "
+              :disabled="startReady(scope.row)"
               >开始更新</el-button
             >
             <!-- <el-button size="small" type="danger">停止更新</el-button> -->
@@ -111,34 +106,46 @@
     </section>
 
     <section class="page-bios-opearation-box">
-      <el-button @click="handleClick(scope.row)" size="small"
-        >更新全部</el-button
+      <el-button size="small" type="primary" @click="saveBiosConf"
+        >保存当前配置</el-button
       >
-      <el-button size="small" type="danger">停止</el-button>
+
+      <el-button type="success" @click="biosFlashAll" size="small"
+        >批量更新</el-button
+      >
     </section>
+
+    <BiosMachineEdite
+      :MachineInfo="editMachineInfo"
+      :dialogFormVisible="FormVisible"
+      @save="saveEditeInfo"
+    ></BiosMachineEdite>
   </div>
 </template>
 
 <script>
+import FileSelect from "components/FileSelect";
 import { ImageUpdateStates } from "../../lib/varaible.js";
 import { mapState, mapGetters } from "vuex";
+import BiosMachineEdite from "components/BiosPage/BiosMachineEdite";
 import Qs from "qs";
-const { net } = require("electron").remote;
-// const fs = require("fs");
-import FileSelect from "components/FileSelect";
-// console.log("文件对象");
-// console.log(fs);
+const { net, dialog } = require("electron").remote;
+const fs = require("fs");
+
 export default {
   name: "BiosUpdateTable",
   data() {
     return {
       file: null,
       MachineList: [],
-      imageUpdateStates: ImageUpdateStates
+      imageUpdateStates: ImageUpdateStates,
+      FormVisible: false,
+      editMachineInfo: {}
     };
   },
   components: {
-    FileSelect
+    FileSelect,
+    BiosMachineEdite
   },
   computed: {
     ...mapState("BIOS", {
@@ -149,7 +156,21 @@ export default {
     ...mapGetters("BIOS", {
       biosConfListText: "biosConfListText",
       biosConfListForUpdate: "biosConfListForUpdate"
-    })
+    }),
+
+    startReady: function() {
+      // console.log(scopeRow)
+
+      return function(scopeRow) {
+        return (this.file !== null &&
+          scopeRow.imageUpdateStates == "connect") ||
+          scopeRow.imageUpdateStates == "connectTimeOut" ||
+          scopeRow.imageUpdateStates == "logout" ||
+          scopeRow.imageUpdateStates == "flashFinish"
+          ? false
+          : true;
+      };
+    }
   },
   beforeMount() {},
   mounted() {},
@@ -161,27 +182,69 @@ export default {
     showLoginWayType(value) {
       console.log(value);
     },
+    // 编辑 BIOS 刷新信息
+    editBiosConf(biosConf) {
+      console.log(biosConf);
+      this.FormVisible = true;
+      this.editMachineInfo = biosConf;
+    },
 
+    saveEditeInfo(value) {
+      console.log(value);
+      this.FormVisible = false;
+      this.$store.commit("BIOS/setBiosMachine", value);
+    },
+    saveBiosConf() {
+      dialog
+        .showSaveDialog({
+          title: "请选择要保存的文件名",
+          buttonLabel: "保存",
+          filters: [{ name: "文件类型", extensions: ["json"] }]
+        })
+        .then(result => {
+          // 去除不必要的属性
+          let config_json = this._.map(this.biosList, itme =>
+            this._.omit(itme, ["id", "imageUpdateStates"])
+          );
+          fs.writeFileSync(
+            result.filePath,
+            JSON.stringify(config_json, null, 4)
+          );
+          console.log(result);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    },
+
+    biosFlashAll() {
+      let selectedMachineItme = this.$refs.MachineTable.selection;
+      console.log(selectedMachineItme);
+
+      selectedMachineItme.forEach(biosConf => {
+        this.startBiosUpdateWithSingle(biosConf);
+      });
+    },
     // 开始更新一台机器
     // 1. 获取 Cookie 信息
     startBiosUpdateWithSingle(biosConf) {
       // 构造表单登录信息
 
       // 开始发起登录请求
-
+      this.MachineList[biosConf.id].imageUpdateStates = "connecting";
       let userInfo = Qs.stringify({
         username: biosConf.username,
         password: biosConf.password
       });
 
-      const api_name = "/api/session";
+      const api_login_interface = "/api/session";
 
       let postOptions = {
         method: "POST",
         protocol: `${biosConf.login_way_type}:`,
         hostname: `${biosConf.bmc_ip}`,
         port: biosConf.login_way_type.toLowerCase() == "https" ? 443 : 80,
-        path: "/api/session",
+        path: api_login_interface,
         // timeout: 3000,
 
         headers: {
@@ -219,14 +282,12 @@ export default {
           resResult.errMessage = "密码用户名不正确";
           resResult.statusCode = 401;
         }
-        // console.log(`Cookie ==> ${Cookie}`);
 
         // return response;
         response.on("data", chunk => {
-          // console.log(chunk);
           let chunkToString = chunk.toString();
           let jsonData = JSON.parse(chunkToString);
-          // console.log(`data: ${chunkToString}`);
+
           if (this._.has(jsonData, "CSRFToken")) {
             resResult["X-CSRFTOKEN"] = jsonData["CSRFToken"];
             this.MachineList[biosConf.id].imageUpdateStates =
@@ -239,12 +300,7 @@ export default {
               {
                 this.MachineList[biosConf.id].imageUpdateStates =
                   "prepareFlashArea";
-                let _parent = this;
 
-                let apiHeader = {
-                  "X-CSRFTOKEN": resResult["X-CSRFTOKEN"]
-                };
-                // this.getHost(biosConf)
                 const axiosInstance = this.$http.create({
                   baseURL: `${biosConf.login_way_type}://${biosConf.bmc_ip}/`,
                   headers: {
@@ -372,11 +428,25 @@ export default {
           }
         })
         .catch(err => {
-          console.log(err);
-          biosConf.imageUpdateStates = "connect";
-          _parent.flashUpdateStop(axiosInstance).then(res => {
-            biosConf.imageUpdateStates = "logout";
+          console.log(err.response);
+          let errMessage = `
+          <div>
+            IP: ${(err.config.baseURL + err.config.url).trim()}
+            <br>
+            Code: ${err.response.data.code}
+            <br>
+            Error: ${err.response.data.error}
+          </div>
+          `;
+          this.$notify.error({
+            title: "刷新过程发生错误",
+            dangerouslyUseHTMLString: true,
+            message: errMessage
+          });
 
+          biosConf.imageUpdateStates = biosConf.imageUpdateStates + "Failed";
+          _parent.flashUpdateStop(axiosInstance).then(res => {
+            // biosConf.imageUpdateStates = "logout";
             _parent.logout(axiosInstance, biosConf);
           });
         });
@@ -426,6 +496,7 @@ export default {
         timeout: 120 * 1000
       });
     },
+
     flashBIOSRom(axiosInstance) {
       const apiName = `api/maintenance/BIOSupgrade`;
       const data = {
@@ -440,12 +511,12 @@ export default {
       // let progress =  _parent.getFlashBiosProgress();
     },
 
-    async getFlashBiosProgress(axiosInstance, biosConf) {
+    getFlashBiosProgress(axiosInstance, biosConf) {
       let _parent = this;
       const apiName = `api/maintenance/BIOSflash-progress`;
 
       // while(true) {
-      let res = await axiosInstance.get(apiName);
+      let res = axiosInstance.get(apiName);
       console.log("*********************");
       console.log(res);
       if (res.data) {
@@ -464,6 +535,7 @@ export default {
       }
       // }
     },
+
     flashUpdateStop(axiosInstance) {
       const apiName = `api/maintenance/BIOSabort`;
       return axiosInstance.post(apiName);
@@ -471,11 +543,7 @@ export default {
 
     getFullApiPath(conf, apiName) {
       return `${conf.login_way_type}://${conf.bmc_ip}/${apiName}`;
-    },
-    getHost(conf) {
-      return `${conf.login_way_type}://${conf.bmc_ip}/`;
     }
-    // dWyfQeDk
   }
 };
 </script>

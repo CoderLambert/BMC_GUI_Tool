@@ -1,40 +1,55 @@
 <template>
   <div>
-    <el-tabs type="border-card">
-      <el-tab-pane label="配置管理">
-        <BiosDevTab></BiosDevTab>
-      </el-tab-pane>
-      <el-tab-pane label="更新界面">
-        <BiosUpdateTable></BiosUpdateTable>
-      </el-tab-pane>
-      <el-tab-pane label="日志记录">日志记录</el-tab-pane>
-    </el-tabs>
+    <nav>
+      <router-link :to="{ name: 'biosconf' }">设置</router-link>
+      <router-link :to="{ name: 'biosupdate' }">更新界面</router-link>
+    </nav>
+    <!-- <keep-alive> -->
+      <router-view />
+    <!-- </keep-alive> -->
+
   </div>
 </template>
 
 <script>
-import BiosDevTab from "../components/BiosPage/BiosDevTab";
-//   import BiosConfig from '../components/BiosPage/BiosConfig'
-import BiosUpdateTable from "../components/BiosPage/BiosUpdate";
 
 export default {
   name: "biospage",
-  // components: { BiosConfig },
   data() {
     return {
       activeName: "conf"
     };
   },
   mounted() {},
-  methods: {},
-  components: {
-    BiosDevTab,
-    BiosUpdateTable
-  }
+  methods: {}
 };
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
+nav {
+    margin-top:5px;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    box-sizing: border-box;}
+a {
+    padding: 0 20px;
+    height: 40px;
+    box-sizing: border-box;
+    line-height: 40px;
+    display: inline-block;
+    list-style: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+    position: relative;
+    text-decoration: none;
+    border:1px solid #eee;
+}
+.router-link-active{
+  color:skyblue;
+  // background: rgb(52, 236, 138);
+}
+
 .el-tabs {
   min-height: calc(100vh - 89px);
   margin-top: 20px;

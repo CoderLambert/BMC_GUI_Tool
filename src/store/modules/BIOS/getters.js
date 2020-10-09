@@ -8,7 +8,7 @@ const getters = {
     // console.log(json_data)
     let target = json_data;
     if (json_data !== null) {
-      target = json_data.map(function(itme,index) {
+      target = json_data.map(function(itme, index) {
         itme.imageUpdateStates = "connect";
         itme.id = index;
         return itme;

@@ -26,6 +26,7 @@ module.exports = {
     option.resolve.alias
       .set("@", resolve("src/"))
       .set("lib", resolve("lib/"))
+      .set("mainCore", resolve("src/ipcMain/core"))
 
       .set("common", resolve("src/common"))
       .set("components", resolve("src/components"));
