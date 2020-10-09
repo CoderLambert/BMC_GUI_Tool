@@ -68,7 +68,6 @@ export default {
   methods: {
     saveChange() {
       console.log("saveChange");
-      // this.dialogFormVisible = false
       let editMachineInfo = this.MachineInfo;
       this.$emit("save", editMachineInfo); //通知父组件改变。
     }

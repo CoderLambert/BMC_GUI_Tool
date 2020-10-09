@@ -6,8 +6,8 @@
       </div>
       <el-row v-show="biosConfListText != 'null'">
         <el-col :span="24" class="page-bios-conf-box split">
-          <h3>BIOS配置文件</h3>
-          <p>文件路径: {{ biosConfFilePath }}</p>
+          <h3>配置信息</h3>
+          <!-- <p>文件路径: {{ biosConfFilePath }}</p> -->
           <pre class="page-bios-conf">{{ biosConfListText }}</pre>
         </el-col>
       </el-row>
@@ -42,6 +42,7 @@ export default {
   computed: {
     ...mapState("BIOS", {
       biosConfList: state => state.biosConfList,
+      biosFlashList: state => state.biosFlashList,
       biosConfFilePath: state => state.biosConfFilePath,
       biosImageFilePath: state => state.biosImageFilePath
     }),
@@ -81,6 +82,22 @@ export default {
           "BIOS/setBiosConfList",
           this._.isArray(jsonData) ? jsonData : [jsonData]
         );
+      
+        // console.log(json_data)
+        let target = jsonData;
+        if (jsonData !== null) {
+          target = jsonData.map(function(itme, index) {
+            itme.imageUpdateStates = "connect";
+            itme.id = index;
+            return itme;
+          });
+        }
+
+        this.$store.commit(
+          "BIOS/setBiosFlashList",
+          this._.isArray(target) ? target : [target]
+        );      
+
         this.$store.commit("BIOS/setBiosConfFilePath", filePath);
       } catch (error) {
         alert("该文件无法解析为json格式,请检查文件格式是否正确");
@@ -111,7 +128,7 @@ export default {
     }
   },
 
-  ...mapMutations("BIOS", ["setBiosConfList", "setBiosConfFilePath"])
+  ...mapMutations("BIOS", ["setBiosConfList", "setBiosConfFilePath", "setBiosFlashList"])
 };
 </script>
 

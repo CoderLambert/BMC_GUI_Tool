@@ -6,12 +6,15 @@
 
     <section class="page-bios-parese-box">
       <el-table
-        :data="MachineList"
+        :data="biosFlashList"
+        @selection-change="handleSelectionChange"
         stripe
         style="width: 100%"
         ref="MachineTable"
       >
-        <el-table-column type="selection" width="55"></el-table-column>
+        <el-table-column type="selection" width="55" >
+
+        </el-table-column>
 
         <el-table-column
           prop="bmc_ip"
@@ -44,15 +47,6 @@
               >HTTPS</el-tag
             >
             <el-tag v-show="scope.row.login_way_type === 'http'">HTTP</el-tag>
-
-            <!-- <el-switch
-              v-model="scope.row.login_way_type"
-              @change="showLoginWayType"
-              active-text="Https"
-              inactive-text="Http"
-            ></el-switch>-->
-            <!-- <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button> -->
-            <!-- <el-button type="text" size="small">编辑</el-button> -->
           </template>
         </el-table-column>
         <el-table-column
@@ -79,8 +73,6 @@
             <span v-show="!imageUpdateStates[scope.row.imageUpdateStates]">
               {{ scope.row.imageUpdateStates }}
             </span>
-            <!-- <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button> -->
-            <!-- <el-button type="text" size="small">编辑</el-button> -->
           </template>
         </el-table-column>
         <el-table-column label="操作">
@@ -91,7 +83,6 @@
               type="success"
               >编辑</el-button
             >
-            <!-- scope.row.imageUpdateStates =='connect'?  true: -->
             <el-button
               @click="startBiosUpdateWithSingle(scope.row)"
               size="small"
@@ -99,7 +90,14 @@
               :disabled="startReady(scope.row)"
               >开始更新</el-button
             >
-            <!-- <el-button size="small" type="danger">停止更新</el-button> -->
+            <el-button
+              @click="deletBiosConf(scope.row)"
+              size="small"
+              type="danger"
+              >
+              删除
+            </el-button>
+
           </template>
         </el-table-column>
       </el-table>
@@ -110,7 +108,7 @@
         >保存当前配置</el-button
       >
 
-      <el-button type="success" @click="biosFlashAll" size="small"
+      <el-button type="success" @click="biosFlashAll" size="small" 
         >批量更新</el-button
       >
     </section>
@@ -137,8 +135,9 @@ export default {
   data() {
     return {
       file: null,
-      MachineList: [],
+      // biosFlashList: [],
       imageUpdateStates: ImageUpdateStates,
+      selectionData: [],
       FormVisible: false,
       editMachineInfo: {}
     };
@@ -150,6 +149,7 @@ export default {
   computed: {
     ...mapState("BIOS", {
       biosList: state => state.biosConfList,
+      biosFlashList: state => state.biosFlashList,
       biosImageFilePath: state => state.biosImageFilePath
     }),
 
@@ -175,10 +175,15 @@ export default {
   beforeMount() {},
   mounted() {},
   beforeUpdate() {
-    this.MachineList = this._.cloneDeep(this.biosConfListForUpdate);
-    console.log(this.MachineList);
+    // this.biosFlashList = this._.cloneDeep(this.biosConfListForUpdate);
+    // console.log(this.biosFlashList);
   },
   methods: {
+
+    handleSelectionChange(val) {
+      // 获取选中的值
+      this.selectionData = val;
+    },
     showLoginWayType(value) {
       console.log(value);
     },
@@ -189,6 +194,10 @@ export default {
       this.editMachineInfo = biosConf;
     },
 
+    deletBiosConf(biosConf) {
+      console.log(biosConf)
+      this.$store.commit('BIOS/deleteBiosMachine', biosConf)
+    },
     saveEditeInfo(value) {
       console.log(value);
       this.FormVisible = false;
@@ -231,7 +240,7 @@ export default {
       // 构造表单登录信息
 
       // 开始发起登录请求
-      this.MachineList[biosConf.id].imageUpdateStates = "connecting";
+      this.biosFlashList[biosConf.id].imageUpdateStates = "connecting";
       let userInfo = Qs.stringify({
         username: biosConf.username,
         password: biosConf.password
@@ -290,15 +299,15 @@ export default {
 
           if (this._.has(jsonData, "CSRFToken")) {
             resResult["X-CSRFTOKEN"] = jsonData["CSRFToken"];
-            this.MachineList[biosConf.id].imageUpdateStates =
+            this.biosFlashList[biosConf.id].imageUpdateStates =
               "prepareFlashArea";
-            this.MachineList[biosConf.id].sessionID = jsonData["racsession_id"];
+            this.biosFlashList[biosConf.id].sessionID = jsonData["racsession_id"];
           }
 
           switch (resResult.statusCode) {
             case 200:
               {
-                this.MachineList[biosConf.id].imageUpdateStates =
+                this.biosFlashList[biosConf.id].imageUpdateStates =
                   "prepareFlashArea";
 
                 const axiosInstance = this.$http.create({
@@ -320,7 +329,7 @@ export default {
                   `无法获取机器Token,请确认机器信息`
                 )
               });
-              this.MachineList[biosConf.id].imageUpdateStates = "loginFailed";
+              this.biosFlashList[biosConf.id].imageUpdateStates = "loginFailed";
               break;
             }
             default: {
@@ -359,7 +368,7 @@ export default {
         resResult.errMessage = e.message;
         if (e.message.indexOf("ERR_CONNECTION_TIMED_OUT") > 0) {
           resResult.statusCode = 408;
-          this.MachineList[biosConf.id].imageUpdateStates = "connectTimeOut";
+          this.biosFlashList[biosConf.id].imageUpdateStates = "connectTimeOut";
           this.$notify({
             title: `${biosConf.bmc_ip} 超时通知`,
             message: this.$createElement(
@@ -371,7 +380,7 @@ export default {
         } else {
           resResult.statusCode = 500;
 
-          this.MachineList[biosConf.id].imageUpdateStates = "abort";
+          this.biosFlashList[biosConf.id].imageUpdateStates = "abort";
 
           this.$notify({
             title: `${biosConf.bmc_ip} 请求错误通知`,

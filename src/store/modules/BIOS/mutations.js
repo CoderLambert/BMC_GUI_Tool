@@ -4,7 +4,10 @@ const mutations = {
     console.log(payload);
     state.biosConfList = payload;
   },
-
+  setBiosFlashList(state, payload) {
+    console.log(payload);
+    state.biosFlashList = payload;
+  },
   setBiosMachine(state, payload) {
     console.log(payload);
     // state.biosConfList = payload;
@@ -17,6 +20,11 @@ const mutations = {
     console.log(`payload.save_bios_config =》 ${payload.save_bios_config}`)
   },
 
+  deleteBiosMachine(state,payload) {
+    console.log(payload)
+    state.biosConfList.splice(payload.id,1);
+    console.log(state.biosConfList)
+  },
   setBiosConfFilePath(state, payload) {
     console.log(payload);
     state.biosConfFilePath = payload;
