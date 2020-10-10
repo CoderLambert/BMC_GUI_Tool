@@ -1,7 +1,9 @@
 import Vue from "vue";
 import Router from "vue-router";
+import BmcConf from "../components/BmcPage/BmcConf";
+import BMCUpdateTable from "../components/BmcPage/BmcUpdate";
+
 import BiosDevTab from "../components/BiosPage/BiosDevTab";
-//   import BiosConfig from '../components/BiosPage/BiosConfig'
 import BiosUpdateTable from "../components/BiosPage/BiosUpdate";
 Vue.use(Router);
 
@@ -11,35 +13,53 @@ export default new Router({
       path: "/",
       name: "bios",
       component: require("@/pages/BiosPageView").default,
-      redirect: { name: 'biosconf' },
+      redirect: { name: "biosconf" },
 
       children: [
         // bios 配置
         {
-          path: 'biosconf',
-          name: 'biosconf',
+          path: "biosconf",
+          name: "biosconf",
           meta: {
-            title: 'bios 配置'
+            title: "bios 配置"
           },
           component: BiosDevTab
         },
         {
-          path: 'biosupdate',
-          name: 'biosupdate',
+          path: "biosupdate",
+          name: "biosupdate",
           meta: {
-            title: 'bios 更新'
+            title: "bios 更新"
           },
           component: BiosUpdateTable
         }
-
       ]
-
-
     },
     {
       path: "/bmc",
       name: "bmc",
-      component: require("@/pages/BmcPageView").default
+      component: require("@/pages/BmcPageView").default,
+      redirect: { name: "BmcConf" },
+
+      children: [
+        // BMC 配置
+        {
+          path: "BmcConf",
+          name: "BmcConf",
+          meta: {
+            title: "BMC 配置"
+          },
+          component: BmcConf
+        },
+        {
+          path: 'BmcUpdate',
+          name: 'BmcUpdate',
+          meta: {
+            title: 'BMC 更新'
+          },
+          component: BMCUpdateTable
+        }
+      ]
     },
 
     {

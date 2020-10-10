@@ -47,7 +47,7 @@
     </el-form>
 
     <div slot="footer" class="dialog-footer">
-      <el-button @click="dialogFormVisible = false">取 消</el-button>
+      <el-button @click="closeDialog">取 消</el-button>
       <el-button type="primary" @click="saveChange">确 定</el-button>
     </div>
   </el-dialog>
@@ -70,6 +70,9 @@ export default {
       console.log("saveChange");
       let editMachineInfo = this.MachineInfo;
       this.$emit("save", editMachineInfo); //通知父组件改变。
+    },
+    closeDialog(){
+      this.$emit("close")
     }
   }
 };

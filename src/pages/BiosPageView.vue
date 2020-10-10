@@ -1,52 +1,57 @@
 <template>
   <div>
-    <nav>
-      <router-link :to="{ name: 'biosconf' }">设置</router-link>
-      <router-link :to="{ name: 'biosupdate' }">更新界面</router-link>
-    </nav>
-    <!-- <keep-alive> -->
-      <router-view />
-    <!-- </keep-alive> -->
+    <NavTable :navTable="navTables"></NavTable>
 
+    <!-- <keep-alive> -->
+    <router-view />
+    <!-- </keep-alive> -->
   </div>
 </template>
 
 <script>
-
+import NavTable from "../components/NavTable";
 export default {
   name: "biospage",
   data() {
     return {
-      activeName: "conf"
+      activeName: "conf",
+      navTables: [
+        { target: { name: "biosconf" }, title: "设置" },
+        { target: { name: "biosupdate" }, title: "更新界面" }
+      ]
     };
   },
   mounted() {},
-  methods: {}
+  methods: {},
+  components: {
+    NavTable
+  }
 };
 </script>
 
 <style lang="less" scoped>
 nav {
-    margin-top:5px;
-    border-bottom: none;
-    border-radius: 4px 4px 0 0;
-    box-sizing: border-box;}
-a {
-    padding: 0 20px;
-    height: 40px;
-    box-sizing: border-box;
-    line-height: 40px;
-    display: inline-block;
-    list-style: none;
-    font-size: 14px;
-    font-weight: 500;
-    color: #303133;
-    position: relative;
-    text-decoration: none;
-    border:1px solid #eee;
+  margin-top: 5px;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  box-sizing: border-box;
 }
-.router-link-active{
-  color:skyblue;
+a {
+  padding: 0 20px;
+  height: 40px;
+  box-sizing: border-box;
+  line-height: 40px;
+  display: inline-block;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  position: relative;
+  text-decoration: none;
+  border: 1px solid #eee;
+}
+.router-link-active {
+  color: skyblue;
   // background: rgb(52, 236, 138);
 }
 

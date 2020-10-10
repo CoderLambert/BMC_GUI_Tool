@@ -1,12 +1,11 @@
 <template>
-  <div class="bios-dev-page">
-    <section class="bios-update-box">
+  <div class="bmc-dev-page">
+    <section class="bmc-update-box">
       <file-select v-model="file"> </file-select>
     </section>
-
-    <section class="page-bios-parese-box">
+    <section class="page-bmc-parese-box">
       <el-table
-        :data="biosFlashList"
+        :data="bmcFlashList"
         @selection-change="handleSelectionChange"
         stripe
         style="width: 100%"
@@ -48,16 +47,16 @@
           </template>
         </el-table-column>
         <el-table-column
-          prop="save_bios_config"
-          label="保存BIOS设置"
+          prop="save_bmc_config"
+          label="保存BMC设置"
           width="150"
           sortable
         >
           <template slot-scope="scope">
-            <el-tag v-show="scope.row.save_bios_config === 'yes'" type="success"
+            <el-tag v-show="scope.row.save_bmc_config === 'yes'" type="success"
               >Yes</el-tag
             >
-            <el-tag v-show="scope.row.save_bios_config === 'no'" type="info"
+            <el-tag v-show="scope.row.save_bmc_config === 'no'" type="info"
               >No</el-tag
             >
           </template>
@@ -76,14 +75,14 @@
         <el-table-column label="操作">
           <template slot-scope="scope">
             <el-button
-              @click="editBiosConf(scope.row)"
+              @click="editBmcConf(scope.row)"
               size="small"
               type="primary"
               >编辑</el-button
             >
 
             <el-button
-              @click="deletBiosConf(scope.row)"
+              @click="deletBmcConf(scope.row)"
               size="small"
               type="danger"
             >
@@ -91,7 +90,7 @@
             </el-button>
 
             <el-button
-              @click="startBiosUpdateWithSingle(scope.row)"
+              @click="startBmcUpdateWithSingle(scope.row)"
               size="small"
               type="success"
               :disabled="startReady(scope.row)"
@@ -102,22 +101,22 @@
       </el-table>
     </section>
 
-    <section class="page-bios-opearation-box">
-      <el-button size="small" type="primary" @click="saveBiosConf"
+    <section class="page-bmc-opearation-box">
+      <el-button size="small" type="primary" @click="saveBmcConf"
         >保存当前配置</el-button
       >
 
-      <el-button type="success" @click="biosFlashAll" size="small"
+      <el-button type="success" @click="bmcFlashAll" size="small"
         >批量更新</el-button
       >
     </section>
 
-    <BiosMachineEdite
+    <BmcMachineEdite
       :MachineInfo="editMachineInfo"
       :dialogFormVisible="FormVisible"
       @save="saveEditeInfo"
       @close="hideEditeInfo"
-    ></BiosMachineEdite>
+    ></BmcMachineEdite>
   </div>
 </template>
 
@@ -125,17 +124,17 @@
 import FileSelect from "components/FileSelect";
 import { ImageUpdateStates } from "../../lib/varaible.js";
 import { mapState, mapGetters } from "vuex";
-import BiosMachineEdite from "components/BiosPage/BiosMachineEdite";
+// import BmcMachineEdite from "components/BmcPage/BmcMachineEdite";
 import Qs from "qs";
 const { net, dialog } = require("electron").remote;
 const fs = require("fs");
 
 export default {
-  name: "BiosUpdateTable",
+  name: "BmcUpdateTable",
   data() {
     return {
       file: null,
-      // biosFlashList: [],
+      // bmcFlashList: [],
       imageUpdateStates: ImageUpdateStates,
       selectionData: [],
       FormVisible: false,
@@ -144,18 +143,18 @@ export default {
   },
   components: {
     FileSelect,
-    BiosMachineEdite
+    // BmcMachineEdite
   },
   computed: {
-    ...mapState("BIOS", {
-      biosList: state => state.biosConfList,
-      biosFlashList: state => state.biosFlashList,
-      biosImageFilePath: state => state.biosImageFilePath
+    ...mapState("BMC", {
+      bmcList: state => state.bmcConfList,
+      bmcFlashList: state => state.bmcFlashList,
+      bmcImageFilePath: state => state.bmcImageFilePath
     }),
 
-    ...mapGetters("BIOS", {
-      biosConfListText: "biosConfListText",
-      biosConfListForUpdate: "biosConfListForUpdate"
+    ...mapGetters("BMC", {
+      bmcConfListText: "bmcConfListText",
+      bmcConfListForUpdate: "bmcConfListForUpdate"
     }),
 
     startReady: function() {
@@ -183,26 +182,26 @@ export default {
     showLoginWayType(value) {
       console.log(value);
     },
-    // 编辑 BIOS 刷新信息
-    editBiosConf(biosConf) {
-      console.log(biosConf);
+    // 编辑 BMC 刷新信息
+    editBmcConf(bmcConf) {
+      console.log(bmcConf);
       this.FormVisible = true;
-      this.editMachineInfo = biosConf;
+      this.editMachineInfo = bmcConf;
     },
 
-    deletBiosConf(biosConf) {
-      console.log(biosConf);
-      this.$store.commit("BIOS/deleteBiosMachine", biosConf);
+    deletBmcConf(bmcConf) {
+      console.log(bmcConf);
+      this.$store.commit("BMC/deleteBmcMachine", bmcConf);
     },
     saveEditeInfo(value) {
       console.log(value);
       this.FormVisible = false;
-      this.$store.commit("BIOS/setBiosMachine", value);
+      this.$store.commit("BMC/setBmcMachine", value);
     },
     hideEditeInfo() {
       this.FormVisible = false;
     },
-    saveBiosConf() {
+    saveBmcConf() {
       dialog
         .showSaveDialog({
           title: "请选择要保存的文件名",
@@ -211,7 +210,7 @@ export default {
         })
         .then(result => {
           // 去除不必要的属性
-          let config_json = this._.map(this.biosFlashList, itme =>
+          let config_json = this._.map(this.bmcFlashList, itme =>
             this._.omit(itme, ["id", "imageUpdateStates"])
           );
           fs.writeFileSync(
@@ -225,33 +224,33 @@ export default {
         });
     },
 
-    biosFlashAll() {
+    bmcFlashAll() {
       let selectedMachineItme = this.$refs.MachineTable.selection;
       console.log(selectedMachineItme);
 
-      selectedMachineItme.forEach(biosConf => {
-        this.startBiosUpdateWithSingle(biosConf);
+      selectedMachineItme.forEach(bmcConf => {
+        this.startBmcUpdateWithSingle(bmcConf);
       });
     },
     // 开始更新一台机器
     // 1. 获取 Cookie 信息
-    startBiosUpdateWithSingle(biosConf) {
+    startBmcUpdateWithSingle(bmcConf) {
       // 构造表单登录信息
 
       // 开始发起登录请求
-      this.biosFlashList[biosConf.id].imageUpdateStates = "connecting";
+      this.bmcFlashList[bmcConf.id].imageUpdateStates = "connecting";
       let userInfo = Qs.stringify({
-        username: biosConf.username,
-        password: biosConf.password
+        username: bmcConf.username,
+        password: bmcConf.password
       });
 
       const api_login_interface = "/api/session";
 
       let postOptions = {
         method: "POST",
-        protocol: `${biosConf.login_way_type}:`,
-        hostname: `${biosConf.bmc_ip}`,
-        port: biosConf.login_way_type.toLowerCase() == "https" ? 443 : 80,
+        protocol: `${bmcConf.login_way_type}:`,
+        hostname: `${bmcConf.bmc_ip}`,
+        port: bmcConf.login_way_type.toLowerCase() == "https" ? 443 : 80,
         path: api_login_interface,
         // timeout: 3000,
 
@@ -298,43 +297,43 @@ export default {
 
           if (this._.has(jsonData, "CSRFToken")) {
             resResult["X-CSRFTOKEN"] = jsonData["CSRFToken"];
-            this.biosFlashList[biosConf.id].imageUpdateStates =
+            this.bmcFlashList[bmcConf.id].imageUpdateStates =
               "prepareFlashArea";
-            this.biosFlashList[biosConf.id].sessionID =
+            this.bmcFlashList[bmcConf.id].sessionID =
               jsonData["racsession_id"];
           }
 
           switch (resResult.statusCode) {
             case 200:
               {
-                this.biosFlashList[biosConf.id].imageUpdateStates =
+                this.bmcFlashList[bmcConf.id].imageUpdateStates =
                   "prepareFlashArea";
 
                 const axiosInstance = this.$http.create({
-                  baseURL: `${biosConf.login_way_type}://${biosConf.bmc_ip}/`,
+                  baseURL: `${bmcConf.login_way_type}://${bmcConf.bmc_ip}/`,
                   headers: {
                     "X-CSRFTOKEN": resResult["X-CSRFTOKEN"]
                   }
                 });
 
-                this.startUpdateBiosTask(axiosInstance, biosConf);
+                this.startUpdateBmcTask(axiosInstance, bmcConf);
               }
               break;
             case 401: {
               this.$notify({
-                title: `${biosConf.bmc_ip} 错误通知`,
+                title: `${bmcConf.bmc_ip} 错误通知`,
                 message: this.$createElement(
                   "i",
                   { style: "color: red" },
                   `无法获取机器Token,请确认机器信息`
                 )
               });
-              this.biosFlashList[biosConf.id].imageUpdateStates = "loginFailed";
+              this.bmcFlashList[bmcConf.id].imageUpdateStates = "loginFailed";
               break;
             }
             default: {
               this.$notify({
-                title: `${biosConf.bmc_ip} 错误通知`,
+                title: `${bmcConf.bmc_ip} 错误通知`,
                 message: this.$createElement(
                   "i",
                   { style: "color: red" },
@@ -349,7 +348,7 @@ export default {
         response.on("error", error => {
           console.log(`响应 ERROR: ${JSON.stringify(error)}`);
           this.$notify({
-            title: `${biosConf.bmc_ip} 错误通知`,
+            title: `${bmcConf.bmc_ip} 错误通知`,
             message: this.$createElement(
               "i",
               { style: "color: red" },
@@ -368,9 +367,9 @@ export default {
         resResult.errMessage = e.message;
         if (e.message.indexOf("ERR_CONNECTION_TIMED_OUT") > 0) {
           resResult.statusCode = 408;
-          this.biosFlashList[biosConf.id].imageUpdateStates = "connectTimeOut";
+          this.bmcFlashList[bmcConf.id].imageUpdateStates = "connectTimeOut";
           this.$notify({
-            title: `${biosConf.bmc_ip} 超时通知`,
+            title: `${bmcConf.bmc_ip} 超时通知`,
             message: this.$createElement(
               "i",
               { style: "color: teal" },
@@ -380,10 +379,10 @@ export default {
         } else {
           resResult.statusCode = 500;
 
-          this.biosFlashList[biosConf.id].imageUpdateStates = "abort";
+          this.bmcFlashList[bmcConf.id].imageUpdateStates = "abort";
 
           this.$notify({
-            title: `${biosConf.bmc_ip} 请求错误通知`,
+            title: `${bmcConf.bmc_ip} 请求错误通知`,
             message: this.$createElement(
               "i",
               { style: "color: red" },
@@ -406,33 +405,33 @@ export default {
       });
     },
 
-    startUpdateBiosTask(axiosInstance, biosConf) {
+    startUpdateBmcTask(axiosInstance, bmcConf) {
       const _parent = this;
 
-      // 1. 准备 BIOS 环境，成功后开始上传 BIOS 超时限定 180s
+      // 1. 准备 BMC 环境，成功后开始上传 BMC 超时限定 180s
       // PUT
-      this.preBiosFlash(axiosInstance)
+      this.preBmcFlash(axiosInstance)
         .then(function(res) {
           console.log("========pre=========");
           console.log(res);
-          biosConf.imageUpdateStates = "uploadBIOSRom";
-          return _parent.uploadBiosRom(axiosInstance, biosConf);
+          bmcConf.imageUpdateStates = "uploadBMCRom";
+          return _parent.uploadBmcRom(axiosInstance, bmcConf);
         })
 
         //  2. 开始验证
         .then(res => {
           if (res) {
-            biosConf.imageUpdateStates = "verifyBIOSRom";
-            return _parent.verifyBIOSRom(axiosInstance);
+            bmcConf.imageUpdateStates = "verifyBMCRom";
+            return _parent.verifyBMCRom(axiosInstance);
           }
         })
 
         // 3. 验证结束，开始刷新
         .then(res => {
           if (res) {
-            biosConf.imageUpdateStates = "flashBIOSRom";
-            _parent.flashBIOSRom(axiosInstance).then(res => {
-              _parent.getFlashBiosProgress(axiosInstance, biosConf);
+            bmcConf.imageUpdateStates = "flashBMCRom";
+            _parent.flashBMCRom(axiosInstance).then(res => {
+              _parent.getFlashBmcProgress(axiosInstance, bmcConf);
             });
           }
         })
@@ -453,30 +452,30 @@ export default {
             message: errMessage
           });
 
-          biosConf.imageUpdateStates = biosConf.imageUpdateStates + "Failed";
+          bmcConf.imageUpdateStates = bmcConf.imageUpdateStates + "Failed";
           _parent.flashUpdateStop(axiosInstance).then(res => {
-            // biosConf.imageUpdateStates = "logout";
-            _parent.logout(axiosInstance, biosConf);
+            // bmcConf.imageUpdateStates = "logout";
+            _parent.logout(axiosInstance, bmcConf);
           });
         });
     },
     // 注销退出接口
-    logout(axiosInstance, biosConf) {
-      const apiName = `api/settings/service-sessions/${biosConf.sessionID}`;
+    logout(axiosInstance, bmcConf) {
+      const apiName = `api/settings/service-sessions/${bmcConf.sessionID}`;
       console.log(`[DEBUG API] + logout ==> ${apiName}`);
       return axiosInstance.post(apiName);
     },
 
-    // BIOS 环境预处理
-    preBiosFlash(axiosInstance) {
-      const apiName = `api/maintenance/BIOSflash`;
+    // BMC 环境预处理
+    preBmcFlash(axiosInstance) {
+      const apiName = `api/maintenance/BMCflash`;
       return axiosInstance.put(apiName);
     },
-    // 上传 BIOS Rom
+    // 上传 BMC Rom
     // 超时时间 180 s
-    uploadBiosRom(axiosInstance, biosConf) {
+    uploadBmcRom(axiosInstance, bmcConf) {
       console.log(this.file);
-      const apiName = `api/maintenance/BIOSfirmware`;
+      const apiName = `api/maintenance/BMCfirmware`;
       let forms = new FormData();
 
       forms.append("fwimage", this.file);
@@ -491,23 +490,23 @@ export default {
           let complete =
             ((progressEvent.loaded / progressEvent.total) * 100) | 0;
           console.log(complete);
-          biosConf.imageUpdateStates = `当前上传进度： ${complete}%`;
+          bmcConf.imageUpdateStates = `当前上传进度： ${complete}%`;
           // this.uploadProgress = complete;
           // this.progressBarVisble = this.uploadProgress < 100;
         }
       });
     },
 
-    verifyBIOSRom(axiosInstance) {
-      const apiName = `api/maintenance/BIOSverification`;
+    verifyBMCRom(axiosInstance) {
+      const apiName = `api/maintenance/BMCverification`;
       // 验证超时时间
       return axiosInstance.get(apiName, {
         timeout: 120 * 1000
       });
     },
 
-    flashBIOSRom(axiosInstance) {
-      const apiName = `api/maintenance/BIOSupgrade`;
+    flashBMCRom(axiosInstance) {
+      const apiName = `api/maintenance/BMCupgrade`;
       const data = {
         WEBVAR_UPDATEME0: 0,
         WEBVAR_UPDATEME1: 0,
@@ -517,12 +516,12 @@ export default {
       return axiosInstance.put(apiName, data, {
         timeout: 180 * 1000
       });
-      // let progress =  _parent.getFlashBiosProgress();
+      // let progress =  _parent.getFlashBmcProgress();
     },
 
-    getFlashBiosProgress(axiosInstance, biosConf) {
+    getFlashBmcProgress(axiosInstance, bmcConf) {
       let _parent = this;
-      const apiName = `api/maintenance/BIOSflash-progress`;
+      const apiName = `api/maintenance/BMCflash-progress`;
 
       // while(true) {
       axiosInstance.get(apiName).then(res => {
@@ -531,16 +530,16 @@ export default {
         if (res.data) {
           let progress = parseInt(res.data.progress, 10);
           console.log(progress);
-          biosConf.imageUpdateStates = `刷新进度 (${progress}%)  `;
+          bmcConf.imageUpdateStates = `刷新进度 (${progress}%)  `;
         }
         console.log(res.data.state);
 
         if (res.data.state != 2) {
-          _parent.getFlashBiosProgress.call(_parent, axiosInstance, biosConf);
+          _parent.getFlashBmcProgress.call(_parent, axiosInstance, bmcConf);
         } else {
           // 刷新完毕
-          biosConf.imageUpdateStates = "flashFinish";
-          _parent.logout.call(_parent, axiosInstance, biosConf);
+          bmcConf.imageUpdateStates = "flashFinish";
+          _parent.logout.call(_parent, axiosInstance, bmcConf);
         }
       })
       .catch(err => {
@@ -549,7 +548,7 @@ export default {
     },
 
     flashUpdateStop(axiosInstance) {
-      const apiName = `api/maintenance/BIOSabort`;
+      const apiName = `api/maintenance/BMCabort`;
       return axiosInstance.post(apiName);
     },
 
@@ -561,13 +560,13 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.bios-update-box {
+.bmc-update-box {
   margin-top: 20px;
   margin-right: 50px;
   text-align: right;
   color: #bebebe;
 }
-.page-bios-opearation-box {
+.page-bmc-opearation-box {
   margin-top: 20px;
   text-align: center;
 }

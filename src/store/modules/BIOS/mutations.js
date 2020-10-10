@@ -1,3 +1,4 @@
+import _ from "lodash";
 const mutations = {
   // 1 不带参数的方式
   setBiosConfList(state, payload) {
@@ -17,13 +18,17 @@ const mutations = {
     updateItme.password = payload.password;
     updateItme.save_bios_config = payload.save_bios_config;
     updateItme.username = payload.username;
-    console.log(`payload.save_bios_config =》 ${payload.save_bios_config}`)
+    console.log(`payload.save_bios_config =》 ${payload.save_bios_config}`);
   },
 
-  deleteBiosMachine(state,payload) {
-    console.log(payload)
-    state.biosConfList.splice(payload.id,1);
-    console.log(state.biosConfList)
+  deleteBiosMachine(state, payload) {
+    console.log(payload);
+    let index = _.findIndex(state.biosFlashList, function(machine) {
+      return machine.id === payload.id;
+    });
+    console.log(`deleteBiosMachine index => ${index}`);
+    state.biosFlashList.splice(index, 1);
+    console.log(state.biosFlashList);
   },
   setBiosConfFilePath(state, payload) {
     console.log(payload);

@@ -8,8 +8,8 @@
       </div>
 
       <JsonInfo
-        :jsonInfo="biosConfListText"
-        :filePath="biosConfFilePath"
+        :jsonInfo="bmcConfListText"
+        :filePath="bmcConfFilePath"
       ></JsonInfo>
     </div>
   </div>
@@ -23,49 +23,46 @@ const { dialog } = require("electron").remote;
 const fs = require("fs");
 
 export default {
-  name: "BiosDevTable",
+  name: "BmcConf",
   data() {
     return {};
   },
   mounted() {
-    let preBiosConfFile = localStorage.getItem("BiosConfList");
-    let preBiosImgFilePath = localStorage.getItem("BiosImgFilePath");
-    fs.exists(preBiosConfFile, exists => {
-      exists ? this.readFileInfo(preBiosConfFile) : false;
+    let preBmcConfFile = localStorage.getItem("BmcConfList");
+    let preBmcImgFilePath = localStorage.getItem("BmcImgFilePath");
+    fs.exists(preBmcConfFile, exists => {
+      exists ? this.readFileInfo(preBmcConfFile) : false;
     });
 
-    fs.exists(preBiosImgFilePath, exists => {
-      exists ? this.setImgFilePath(preBiosImgFilePath) : false;
+    fs.exists(preBmcImgFilePath, exists => {
+      exists ? this.setImgFilePath(preBmcImgFilePath) : false;
     });
   },
 
   computed: {
-    ...mapState("BIOS", {
-      biosConfList: state => state.biosConfList,
-      biosFlashList: state => state.biosFlashList,
-      biosConfFilePath: state => state.biosConfFilePath,
-      biosImageFilePath: state => state.biosImageFilePath
+    ...mapState("BMC", {
+      bmcConfList: state => state.bmcConfList,
+      bmcFlashList: state => state.bmcFlashList,
+      bmcConfFilePath: state => state.bmcConfFilePath,
+      bmcImageFilePath: state => state.bmcImageFilePath
     }),
 
-    ...mapGetters("BIOS", {
-      biosConfListText: "biosConfListText"
+    ...mapGetters("BMC", {
+      bmcConfListText: "bmcConfListText"
     })
   },
-
   methods: {
     openConfFile() {
       dialog
         .showOpenDialog({
-          title: "请选择批量更新BIOS配置文件",
+          title: "请选择批量更新BMC配置文件",
           defaultPath: "settings.json",
           filters: [{ name: "json", extensions: ["json"] }]
         })
         .then(result => {
           if (!result.canceled) {
             this.readFileInfo(result.filePaths[0]);
-            // store.set("BiosConfList", result.filePaths[0]);
-            localStorage.setItem("BiosConfList", result.filePaths[0]);
-            // ipcRenderer.send("window-reload");
+            localStorage.setItem("BmcConfList", result.filePaths[0]);
           }
         })
         .catch(err => {
@@ -79,7 +76,7 @@ export default {
       try {
         let jsonData = JSON.parse(rawdata);
         this.$store.commit(
-          "BIOS/setBiosConfList",
+          "BMC/setBmcConfList",
           this._.isArray(jsonData) ? jsonData : [jsonData]
         );
 
@@ -93,24 +90,24 @@ export default {
         }
 
         this.$store.commit(
-          "BIOS/setBiosFlashList",
+          "BMC/setBmcFlashList",
           this._.isArray(target) ? target : [target]
         );
 
-        this.$store.commit("BIOS/setBiosConfFilePath", filePath);
+        this.$store.commit("BMC/setBmcConfFilePath", filePath);
       } catch (error) {
         alert("该文件无法解析为json格式,请检查文件格式是否正确");
       }
     },
 
     setImgFilePath(filePath) {
-      this.$store.commit("BIOS/setBiosImageFilePath", filePath);
+      this.$store.commit("BMC/setBmcImageFilePath", filePath);
     },
 
     openImgFile() {
       dialog
         .showOpenDialog({
-          title: "请选择 BIOS 镜像",
+          title: "请选择 BMC 镜像",
           defaultPath: "image.bin",
           filters: [{ name: "image", extensions: ["bin", "rom"] }]
         })
@@ -118,22 +115,23 @@ export default {
           if (!result.canceled) {
             let filePath = result.filePaths[0];
             this.setImgFilePath(filePath);
-            localStorage.setItem("BiosImgFilePath", filePath);
+            localStorage.setItem("BmcImgFilePath", filePath);
           }
         })
         .catch(err => {
           console.log(err);
         });
-    }
+    },
+    ...mapMutations("BMC", [
+      "setBmcConfList",
+      "setBmcConfFilePath",
+      "setBmcFlashList"
+    ])
   },
+
   components: {
     JsonInfo
-  },
-  ...mapMutations("BIOS", [
-    "setBiosConfList",
-    "setBiosConfFilePath",
-    "setBiosFlashList"
-  ])
+  }
 };
 </script>
 

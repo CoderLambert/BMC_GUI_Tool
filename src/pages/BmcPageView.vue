@@ -1,13 +1,23 @@
 <template>
-  <div>bmc-page</div>
+  <div>
+    <NavTable :navTable="navTables"></NavTable>
+    <router-view />
+  </div>
 </template>
 
 <script>
-// import BiosConfig from '../components/BiosPage/BiosConfig'
-
+import NavTable from "../components/NavTable";
 export default {
   name: "bmc-page",
-  // components: { BiosConfig },
+  components: { NavTable },
+  data: function() {
+    return {
+      navTables: [
+        { target: { name: "BmcConf" }, title: "设置" },
+        { target: { name: "BmcUpdate" }, title: "更新界面" }
+      ]
+    };
+  },
   methods: {}
 };
 </script>
