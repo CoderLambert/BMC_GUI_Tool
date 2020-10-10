@@ -45,38 +45,6 @@ axios.interceptors.response.use(
   function(error) {
     // 对响应错误做点什么
     console.log("--------------axios 错误拦截----------")
-    console.log(error)
-    // console.log("message ==> "  + error)
-    // if(error.message.includes('timeout')){   // 判断请求异常信息中是否含有超时timeout字符串
-    //   console.log(error);
-    //   console.log("网络超时");
-    //   ElementUI.Message.error({message: '请求超时!'});
-
-    //   return "timeout";          // reject这个错误信息
-    // }
-
-    // if (error.response) {
-    //   alert("--------------axios 错误拦截  response ----------")
-
-    //   // The request was made and the server responded with a status code
-    //   // that falls out of the range of 2xx
-    //   console.log(error.response.data);
-    //   console.log(error.response.status);
-    //   console.log(error.response.headers);
-    //   return error.response
-    // } else if (error.request) {
-    //   alert("--------------axios 错误拦截  request ----------")
-    //   console.log(error);
-
-    //   console.log(error.request);
-    //   return error.request
-    // } else {
-    //   alert("--------------axios 错误拦截  message ----------")
-    //   // Something happened in setting up the request that triggered an Error
-    //   console.log('Error', error);
-    //   return error.message
-    // }
-    // console.log(error.config);
     return error;
   }
 );

@@ -13,8 +13,8 @@ export const ImageUpdateStates = {
   uploadBIOSRom: "上传镜像: 当前进度 ",
   uploadBIOSRomFailed: "上传镜像失败",
 
-  verifyBIOSRom: "验证镜像中...",
-  verifyBIOSRomFailed: "验证镜像失败",
+  verifyRom: "验证镜像中...",
+  verifyRomFailed: "验证镜像失败",
   flashBIOSRom: "开始刷新",
   flashBIOSRomFailed: "开始刷新出现错误",
 

@@ -47,7 +47,7 @@
             <el-tag v-show="scope.row.login_way_type === 'http'">HTTP</el-tag>
           </template>
         </el-table-column>
-        <el-table-column
+        <!-- <el-table-column
           prop="save_bios_config"
           label="保存BIOS设置"
           width="150"
@@ -61,7 +61,7 @@
               >No</el-tag
             >
           </template>
-        </el-table-column>
+        </el-table-column> -->
 
         <el-table-column label="当前状态" width="280">
           <template slot-scope="scope">
@@ -107,7 +107,11 @@
         >保存当前配置</el-button
       >
 
-      <el-button type="success" @click="biosFlashAll" size="small"
+      <el-button
+        type="success"
+        @click="biosFlashAll"
+        size="small"
+        :disabled="file === null"
         >批量更新</el-button
       >
     </section>
@@ -122,13 +126,14 @@
 </template>
 
 <script>
+import { saveConfFile } from "../../lib/common.js";
+
 import FileSelect from "components/FileSelect";
 import { ImageUpdateStates } from "../../lib/varaible.js";
 import { mapState, mapGetters } from "vuex";
 import BiosMachineEdite from "components/BiosPage/BiosMachineEdite";
 import Qs from "qs";
-const { net, dialog } = require("electron").remote;
-const fs = require("fs");
+const { net } = require("electron").remote;
 
 export default {
   name: "BiosUpdateTable",
@@ -202,27 +207,10 @@ export default {
     hideEditeInfo() {
       this.FormVisible = false;
     },
+    saveBmcConf() {},
+
     saveBiosConf() {
-      dialog
-        .showSaveDialog({
-          title: "请选择要保存的文件名",
-          buttonLabel: "保存",
-          filters: [{ name: "文件类型", extensions: ["json"] }]
-        })
-        .then(result => {
-          // 去除不必要的属性
-          let config_json = this._.map(this.biosFlashList, itme =>
-            this._.omit(itme, ["id", "imageUpdateStates"])
-          );
-          fs.writeFileSync(
-            result.filePath,
-            JSON.stringify(config_json, null, 4)
-          );
-          console.log(result);
-        })
-        .catch(err => {
-          console.log(err);
-        });
+      saveConfFile(this.biosFlashList);
     },
 
     biosFlashAll() {
@@ -422,8 +410,8 @@ export default {
         //  2. 开始验证
         .then(res => {
           if (res) {
-            biosConf.imageUpdateStates = "verifyBIOSRom";
-            return _parent.verifyBIOSRom(axiosInstance);
+            biosConf.imageUpdateStates = "verifyRom";
+            return _parent.verifyRom(axiosInstance);
           }
         })
 
@@ -525,27 +513,29 @@ export default {
       const apiName = `api/maintenance/BIOSflash-progress`;
 
       // while(true) {
-      axiosInstance.get(apiName).then(res => {
-        console.log("*********************");
-        console.log(res);
-        if (res.data) {
-          let progress = parseInt(res.data.progress, 10);
-          console.log(progress);
-          biosConf.imageUpdateStates = `刷新进度 (${progress}%)  `;
-        }
-        console.log(res.data.state);
+      axiosInstance
+        .get(apiName)
+        .then(res => {
+          console.log("*********************");
+          console.log(res);
+          if (res.data) {
+            let progress = parseInt(res.data.progress, 10);
+            console.log(progress);
+            biosConf.imageUpdateStates = `刷新进度 (${progress}%)  `;
+          }
+          console.log(res.data.state);
 
-        if (res.data.state != 2) {
-          _parent.getFlashBiosProgress.call(_parent, axiosInstance, biosConf);
-        } else {
-          // 刷新完毕
-          biosConf.imageUpdateStates = "flashFinish";
-          _parent.logout.call(_parent, axiosInstance, biosConf);
-        }
-      })
-      .catch(err => {
-        console.log(err)
-      });
+          if (res.data.state != 2) {
+            _parent.getFlashBiosProgress.call(_parent, axiosInstance, biosConf);
+          } else {
+            // 刷新完毕
+            biosConf.imageUpdateStates = "flashFinish";
+            _parent.logout.call(_parent, axiosInstance, biosConf);
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        });
     },
 
     flashUpdateStop(axiosInstance) {

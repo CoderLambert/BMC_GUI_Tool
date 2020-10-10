@@ -28,7 +28,7 @@
         >
       </el-form-item>
 
-      <el-form-item label="保存BIOS设置" :label-width="formLabelWidth">
+      <!-- <el-form-item label="保存BIOS设置" :label-width="formLabelWidth">
         <el-radio
           v-model="MachineInfo.save_bios_config"
           label="yes"
@@ -43,7 +43,7 @@
           size="medium"
           >no</el-radio
         >
-      </el-form-item>
+      </el-form-item> -->
     </el-form>
 
     <div slot="footer" class="dialog-footer">

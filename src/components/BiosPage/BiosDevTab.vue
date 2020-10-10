@@ -3,7 +3,7 @@
     <div class="page-body">
       <div class="bios-conf">
         <el-button type="success" @click="openConfFile"
-          >选取配置文件...</el-button
+          > <span>选取 BIOS 配置文件...</span></el-button
         >
       </div>
 
@@ -143,8 +143,15 @@ export default {
   margin: 0 auto;
   .el-button {
     width: 300px;
-    height: 40px;
+    height: 50px;
     background: #2ea169;
+    span {
+      font-size: 1.3em;
+      font-weight: 600;
+    }
+    &:hover{
+      opacity: 0.8;
+    }
   }
 }
 .bios-dev-page {

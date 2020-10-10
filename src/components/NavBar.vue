@@ -13,8 +13,6 @@
           {{ navitme.name }}
         </router-link>
       </li>
-      <!-- <li class="nav-itme" :class="{'active':navIndex == id}">BIOS</li>
-      <li class="nav-itme active">BMC</li> -->
     </ul>
   </div>
 </template>

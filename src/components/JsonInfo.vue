@@ -17,7 +17,6 @@ export default {
       required: true
     },
     filePath: {
-      type: String,
       required: true
     }
   }

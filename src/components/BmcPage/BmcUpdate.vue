@@ -46,21 +46,6 @@
             <el-tag v-show="scope.row.login_way_type === 'http'">HTTP</el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="save_bmc_config"
-          label="保存BMC设置"
-          width="150"
-          sortable
-        >
-          <template slot-scope="scope">
-            <el-tag v-show="scope.row.save_bmc_config === 'yes'" type="success"
-              >Yes</el-tag
-            >
-            <el-tag v-show="scope.row.save_bmc_config === 'no'" type="info"
-              >No</el-tag
-            >
-          </template>
-        </el-table-column>
 
         <el-table-column label="当前状态" width="280">
           <template slot-scope="scope">
@@ -106,7 +91,11 @@
         >保存当前配置</el-button
       >
 
-      <el-button type="success" @click="bmcFlashAll" size="small"
+      <el-button
+        type="success"
+        @click="bmcFlashAll"
+        size="small"
+        :disabled="file === null"
         >批量更新</el-button
       >
     </section>
@@ -122,12 +111,13 @@
 
 <script>
 import FileSelect from "components/FileSelect";
+import { saveConfFile } from "../../lib/common.js";
+
 import { ImageUpdateStates } from "../../lib/varaible.js";
 import { mapState, mapGetters } from "vuex";
-// import BmcMachineEdite from "components/BmcPage/BmcMachineEdite";
+import BmcMachineEdite from "components/BmcPage/BmcMachineEdite";
 import Qs from "qs";
-const { net, dialog } = require("electron").remote;
-const fs = require("fs");
+const { net } = require("electron").remote;
 
 export default {
   name: "BmcUpdateTable",
@@ -143,7 +133,7 @@ export default {
   },
   components: {
     FileSelect,
-    // BmcMachineEdite
+    BmcMachineEdite
   },
   computed: {
     ...mapState("BMC", {
@@ -202,32 +192,11 @@ export default {
       this.FormVisible = false;
     },
     saveBmcConf() {
-      dialog
-        .showSaveDialog({
-          title: "请选择要保存的文件名",
-          buttonLabel: "保存",
-          filters: [{ name: "文件类型", extensions: ["json"] }]
-        })
-        .then(result => {
-          // 去除不必要的属性
-          let config_json = this._.map(this.bmcFlashList, itme =>
-            this._.omit(itme, ["id", "imageUpdateStates"])
-          );
-          fs.writeFileSync(
-            result.filePath,
-            JSON.stringify(config_json, null, 4)
-          );
-          console.log(result);
-        })
-        .catch(err => {
-          console.log(err);
-        });
+      saveConfFile(this.bmcFlashList);
     },
 
     bmcFlashAll() {
       let selectedMachineItme = this.$refs.MachineTable.selection;
-      console.log(selectedMachineItme);
-
       selectedMachineItme.forEach(bmcConf => {
         this.startBmcUpdateWithSingle(bmcConf);
       });
@@ -252,7 +221,6 @@ export default {
         hostname: `${bmcConf.bmc_ip}`,
         port: bmcConf.login_way_type.toLowerCase() == "https" ? 443 : 80,
         path: api_login_interface,
-        // timeout: 3000,
 
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
@@ -272,7 +240,6 @@ export default {
 
       request.on("response", response => {
         console.log(`STATUS: ${response.statusCode}`);
-        console.log("登录响应结果：");
 
         resResult.statusCode = response.statusCode;
         if (this._.has(response.headers, "set-cookie")) {
@@ -299,8 +266,7 @@ export default {
             resResult["X-CSRFTOKEN"] = jsonData["CSRFToken"];
             this.bmcFlashList[bmcConf.id].imageUpdateStates =
               "prepareFlashArea";
-            this.bmcFlashList[bmcConf.id].sessionID =
-              jsonData["racsession_id"];
+            this.bmcFlashList[bmcConf.id].sessionID = jsonData["racsession_id"];
           }
 
           switch (resResult.statusCode) {
@@ -311,6 +277,7 @@ export default {
 
                 const axiosInstance = this.$http.create({
                   baseURL: `${bmcConf.login_way_type}://${bmcConf.bmc_ip}/`,
+                  timeout: 120 * 1000,
                   headers: {
                     "X-CSRFTOKEN": resResult["X-CSRFTOKEN"]
                   }
@@ -421,8 +388,8 @@ export default {
         //  2. 开始验证
         .then(res => {
           if (res) {
-            bmcConf.imageUpdateStates = "verifyBMCRom";
-            return _parent.verifyBMCRom(axiosInstance);
+            bmcConf.imageUpdateStates = "verifyRom";
+            return _parent.verifyRom(axiosInstance);
           }
         })
 
@@ -430,13 +397,13 @@ export default {
         .then(res => {
           if (res) {
             bmcConf.imageUpdateStates = "flashBMCRom";
-            _parent.flashBMCRom(axiosInstance).then(res => {
+            _parent.flashBMCRom(axiosInstance).then(() => {
               _parent.getFlashBmcProgress(axiosInstance, bmcConf);
             });
           }
         })
         .catch(err => {
-          console.log(err.response);
+          console.log(err);
           let errMessage = `
           <div>
             IP: ${(err.config.baseURL + err.config.url).trim()}
@@ -453,10 +420,8 @@ export default {
           });
 
           bmcConf.imageUpdateStates = bmcConf.imageUpdateStates + "Failed";
-          _parent.flashUpdateStop(axiosInstance).then(res => {
-            // bmcConf.imageUpdateStates = "logout";
-            _parent.logout(axiosInstance, bmcConf);
-          });
+          // 重启 BMC 
+          _parent.flashReset(axiosInstance)
         });
     },
     // 注销退出接口
@@ -468,14 +433,13 @@ export default {
 
     // BMC 环境预处理
     preBmcFlash(axiosInstance) {
-      const apiName = `api/maintenance/BMCflash`;
+      const apiName = `api/maintenance/flash`;
       return axiosInstance.put(apiName);
     },
     // 上传 BMC Rom
     // 超时时间 180 s
     uploadBmcRom(axiosInstance, bmcConf) {
-      console.log(this.file);
-      const apiName = `api/maintenance/BMCfirmware`;
+      const apiName = `api/maintenance/firmware`;
       let forms = new FormData();
 
       forms.append("fwimage", this.file);
@@ -484,21 +448,19 @@ export default {
         headers: {
           "Conten-Type": "application/x-www-form-urlencoded"
         },
-        timeout: 180 * 1000,
+        timeout: 240 * 1000,
 
         onUploadProgress: progressEvent => {
           let complete =
             ((progressEvent.loaded / progressEvent.total) * 100) | 0;
           console.log(complete);
           bmcConf.imageUpdateStates = `当前上传进度： ${complete}%`;
-          // this.uploadProgress = complete;
-          // this.progressBarVisble = this.uploadProgress < 100;
         }
       });
     },
 
     verifyBMCRom(axiosInstance) {
-      const apiName = `api/maintenance/BMCverification`;
+      const apiName = `api/maintenance/firmware/verification`;
       // 验证超时时间
       return axiosInstance.get(apiName, {
         timeout: 120 * 1000
@@ -506,51 +468,49 @@ export default {
     },
 
     flashBMCRom(axiosInstance) {
-      const apiName = `api/maintenance/BMCupgrade`;
-      const data = {
-        WEBVAR_UPDATEME0: 0,
-        WEBVAR_UPDATEME1: 0,
-        WEBVAR_UPDATEME2: 0
-      };
+      const apiName = `api/maintenance/firmware/upgrade`;
+      const data = { preserve_config: 0, flash_status: 1 };
 
       return axiosInstance.put(apiName, data, {
         timeout: 180 * 1000
       });
-      // let progress =  _parent.getFlashBmcProgress();
     },
 
     getFlashBmcProgress(axiosInstance, bmcConf) {
       let _parent = this;
-      const apiName = `api/maintenance/BMCflash-progress`;
+      const apiName = `api/maintenance/firmware/flash-progress`;
 
       // while(true) {
-      axiosInstance.get(apiName).then(res => {
-        console.log("*********************");
-        console.log(res);
-        if (res.data) {
-          let progress = parseInt(res.data.progress, 10);
-          console.log(progress);
-          bmcConf.imageUpdateStates = `刷新进度 (${progress}%)  `;
-        }
-        console.log(res.data.state);
+      axiosInstance
+        .get(apiName)
+        .then(res => {
+          console.log("*********************");
+          console.log(res);
+          if (res.data) {
+            let progress = parseInt(res.data.progress, 10);
+            console.log(progress);
+            bmcConf.imageUpdateStates = `刷新进度 (${progress}%)  `;
+          }
+          console.log(res.data.state);
 
-        if (res.data.state != 2) {
-          _parent.getFlashBmcProgress.call(_parent, axiosInstance, bmcConf);
-        } else {
-          // 刷新完毕
-          bmcConf.imageUpdateStates = "flashFinish";
-          _parent.logout.call(_parent, axiosInstance, bmcConf);
-        }
-      })
-      .catch(err => {
-        console.log(err)
-      });
+          if (res.data.state != 2) {
+            _parent.getFlashBmcProgress.call(_parent, axiosInstance, bmcConf);
+          } else {
+            // 刷新完毕
+            bmcConf.imageUpdateStates = "flashFinish";
+            _parent.flashReset.call(_parent, axiosInstance, bmcConf);
+            // _parent.logout.call(_parent, axiosInstance, bmcConf);
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        });
     },
-
-    flashUpdateStop(axiosInstance) {
-      const apiName = `api/maintenance/BMCabort`;
+    flashReset(axiosInstance) {
+      const apiName = `api/maintenance/reset`;
       return axiosInstance.post(apiName);
     },
+
 
     getFullApiPath(conf, apiName) {
       return `${conf.login_way_type}://${conf.bmc_ip}/${apiName}`;
