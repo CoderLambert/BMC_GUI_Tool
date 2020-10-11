@@ -3,7 +3,12 @@
     1. 选择配置文件，进行批量/单点 的更新 BIOS/BMC Rom
     2. 可以编辑、删除机器配置信息
     3. 可以导出当前配置
-
+# 部分功能截图
+![](https://25years.xyz/media/pictures/BIOS_%E9%85%8D%E7%BD%AE%E9%A1%B5%E9%9D%A2.png)
+![](https://25years.xyz/media/pictures/BIOS_UPDATE_UPLOAD.png)
+![](https://25years.xyz/media/pictures/BIOS_UPDATE_UPLOAD.png)
+![](https://25years.xyz/media/pictures/BIOS_UPDATE_EDITE.png)
+![](https://25years.xyz/media/pictures/BIOS_UPDATE_2.png)
 # 主要技术
 1. 后端
    - Electron          负责构建跨平台的桌面应用程序
