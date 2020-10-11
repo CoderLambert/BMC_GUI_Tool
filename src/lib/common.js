@@ -20,8 +20,6 @@ function saveConfFile(jsonData) {
     .catch(err => {
       console.log(err);
     });
-};
-
-export {
-    saveConfFile
 }
+
+export { saveConfFile };

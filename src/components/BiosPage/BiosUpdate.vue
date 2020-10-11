@@ -12,32 +12,29 @@
         style="width: 100%"
         ref="MachineTable"
       >
-        <el-table-column type="selection" width="55"> </el-table-column>
+        <el-table-column type="selection"> </el-table-column>
 
         <el-table-column
           prop="bmc_ip"
           label="BMC IP"
-          width="180"
           sortable
         ></el-table-column>
 
         <el-table-column
           prop="username"
           label="用户名"
-          width="120"
           sortable
         ></el-table-column>
         <el-table-column
           prop="password"
           label="密码"
-          width="120"
           sortable
         ></el-table-column>
 
         <el-table-column
           prop="login_way_type"
           label="协议类型"
-          width="150"
+          width="300"
           sortable
         >
           <template slot-scope="scope">
@@ -63,7 +60,7 @@
           </template>
         </el-table-column> -->
 
-        <el-table-column label="当前状态" width="280">
+        <el-table-column label="当前状态">
           <template slot-scope="scope">
             <span v-show="imageUpdateStates[scope.row.imageUpdateStates]">
               {{ imageUpdateStates[scope.row.imageUpdateStates] }}

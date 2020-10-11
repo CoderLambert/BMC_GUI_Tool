@@ -11,34 +11,26 @@
         style="width: 100%"
         ref="MachineTable"
       >
-        <el-table-column type="selection" width="55"> </el-table-column>
+        <el-table-column type="selection"> </el-table-column>
 
         <el-table-column
           prop="bmc_ip"
           label="BMC IP"
-          width="180"
           sortable
         ></el-table-column>
 
         <el-table-column
           prop="username"
           label="用户名"
-          width="120"
           sortable
         ></el-table-column>
         <el-table-column
           prop="password"
           label="密码"
-          width="120"
           sortable
         ></el-table-column>
 
-        <el-table-column
-          prop="login_way_type"
-          label="协议类型"
-          width="150"
-          sortable
-        >
+        <el-table-column prop="login_way_type" label="协议类型" sortable>
           <template slot-scope="scope">
             <el-tag v-show="scope.row.login_way_type === 'https'" type="success"
               >HTTPS</el-tag
@@ -47,7 +39,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="当前状态" width="280">
+        <el-table-column label="当前状态">
           <template slot-scope="scope">
             <span v-show="imageUpdateStates[scope.row.imageUpdateStates]">
               {{ imageUpdateStates[scope.row.imageUpdateStates] }}
@@ -420,8 +412,8 @@ export default {
           });
 
           bmcConf.imageUpdateStates = bmcConf.imageUpdateStates + "Failed";
-          // 重启 BMC 
-          _parent.flashReset(axiosInstance)
+          // 重启 BMC
+          _parent.flashReset(axiosInstance);
         });
     },
     // 注销退出接口
@@ -437,7 +429,7 @@ export default {
       return axiosInstance.put(apiName);
     },
     // 上传 BMC Rom
-    // 超时时间 180 s
+    // 超时时间 240 s  根据 rom size 适当加长
     uploadBmcRom(axiosInstance, bmcConf) {
       const apiName = `api/maintenance/firmware`;
       let forms = new FormData();
@@ -510,7 +502,6 @@ export default {
       const apiName = `api/maintenance/reset`;
       return axiosInstance.post(apiName);
     },
-
 
     getFullApiPath(conf, apiName) {
       return `${conf.login_way_type}://${conf.bmc_ip}/${apiName}`;
